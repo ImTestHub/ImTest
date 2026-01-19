@@ -18,7 +18,7 @@ abstract class UpdateHelper {
 
     try {
       final res = await Request().get(
-        'https://api.github.com/repos/TroilOryan/ImTest/releases',
+        'https://api.github.com/repos/ImTestHub/ImTest/releases',
         options: Options(headers: {'user-agent': UaType.mob.ua}),
       );
 
