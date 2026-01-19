@@ -9,7 +9,7 @@ class BuildConfig {
     defaultValue: 'SNAPSHOT',
   );
 
-  static const int buildTime = int.fromEnvironment('im.buildTime');
+  static const int buildTime = int.fromEnvironment('im_test.buildTime');
 
   static const String commitHash = String.fromEnvironment(
     'im_test.commitHash',
