@@ -1,0 +1,239 @@
+part of 'page.dart';
+
+List<Map<String, dynamic>> timeLine(
+  List<MsgEntity> items, {
+  String dateFormat = 'yyyy-MM-dd',
+}) {
+  final Map<String, Map<String, dynamic>> dayMap = {};
+
+  for (final item in items) {
+    final dateStr = DateUtil.formatDateMs(
+      item.createAt,
+      format: DateFormats.y_mo_d,
+    );
+
+    if (!dayMap.containsKey(dateStr) ||
+        item.createAt < dayMap[dateStr]!["timestamp"]) {
+      dayMap[dateStr] = {
+        "timestamp": item.createAt,
+        "id": item.id,
+        "dateStr": dateStr,
+      };
+    }
+  }
+
+  return dayMap.values.toList()
+    ..sort((a, b) => a["timestamp"].compareTo(b["timestamp"]));
+}
+
+class HomeController {
+  WebSocketChannel? socket;
+
+  late final EffectCleanup socketEffect;
+
+  StreamSubscription<dynamic>? streamListener;
+
+  final state = HomeState();
+
+  final textController = TextEditingController();
+
+  final AdvancedDrawerController drawerController = AdvancedDrawerController();
+
+  final serverUrl = computed(() {
+    if (baseManager.env.isEmpty) {
+      return '10.138.20.96:9890';
+    }
+
+    return baseManager.env.replaceAll("http://", "");
+  });
+
+  final ScrollController msgListController = ScrollController();
+
+  void handleMinimize() {
+    windowManager.minimize();
+  }
+
+  void handleMaximize(bool isMaximized) {
+    if (isMaximized) {
+      windowManager.unmaximize();
+
+      return;
+    }
+
+    windowManager.maximize();
+  }
+
+  void handleClose() async {
+    windowManager.close();
+  }
+
+  void handleServiceTap(ServiceEntity service, BuildContext context) {
+    userInfoManager.setCurrentServiceID(service.service_id);
+
+    drawerController.hideDrawer();
+  }
+
+  void handleOpenDrawer() {
+    drawerController.toggleDrawer();
+  }
+
+  void handleContentChange(String value) {
+    state.content.value = value;
+  }
+
+  void handleSend() {
+    if (socket == null) {
+      SmartDialog.showToast('服务未连接');
+
+      return;
+    }
+
+    final text = textController.text.trim();
+
+    if (text.isEmpty || userInfoManager.currentServiceID.value.isEmpty) {
+      return;
+    }
+
+    final sendid = DateTime.now().millisecondsSinceEpoch;
+
+    socket!.sink.add(
+      jsonEncode({
+        "msgtype": "text",
+        "text": {"text": text},
+        "sendid": sendid,
+        "serviceId": userInfoManager.currentServiceID.value,
+      }),
+    );
+
+    textController.clear();
+
+    state.content.value = "";
+
+    final List<MsgEntity> currentMsgList = List.from(
+      state.msgList.value[userInfoManager.currentServiceID.value] ?? [],
+    );
+
+    currentMsgList.add(
+      MsgEntity(
+        id: sendid,
+        content: text,
+        type: MsgType.send,
+        createAt: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+
+    state.msgList.update(
+      userInfoManager.currentServiceID.value,
+      (_) => currentMsgList,
+    );
+  }
+
+  void unloadSocket() {
+    socket!.sink.close();
+
+    socket = null;
+
+    if (streamListener != null) streamListener!.cancel();
+  }
+
+  Future<void> setupSocket(BuildContext context) async {
+    socket = WebSocketChannel.connect(
+      Uri.parse('ws://$serverUrl/ws?token=${userInfoManager.token}'),
+    );
+
+    await socket!.ready;
+
+    socket!.sink.add(jsonEncode({"msgtype": "event_staff_online"}));
+
+    streamListener = socket!.stream.listen((res) {
+      final message = jsonDecode(res);
+
+      final msgtype = message?["msgtype"],
+          sendid = message?['sendid'],
+          msgid = message?['msgid'],
+          code = message?["code"],
+          service_id = message?["serviceId"];
+
+      final List<MsgEntity> currentMsgList = List.from(
+        state.msgList.value[service_id] ?? [],
+      );
+
+      if (msgtype == "event_staff_enter") {
+        userInfoManager.refreshServiceList();
+      } else if (msgtype == "msg_confirm") {
+        final index = currentMsgList.indexWhere(
+          (msg) => msg.id.toString() == sendid,
+        );
+
+        if (index != -1) {
+          currentMsgList.replaceRange(index, index + 1, [
+            currentMsgList[index].copyWith(
+              id: int.parse(msgid),
+              confirmed: true,
+            ),
+          ]);
+
+          state.msgList[service_id] = currentMsgList;
+        }
+      } else if (msgtype == "text") {
+        currentMsgList.add(
+          MsgEntity(
+            id: int.parse(msgid),
+            content: message["text"]['text'],
+            type: MsgType.receive,
+            createAt: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
+
+        state.msgList[service_id] = currentMsgList;
+      }
+
+      if (code == 4001 || code == 4002 || code == 4003) {
+        API.refreshToken(userInfoManager.token.value).then((res) {
+          socket = WebSocketChannel.connect(
+            Uri.parse('ws://$serverUrl/ws?token=$res'),
+          );
+
+          userInfoManager.setToken(res);
+        });
+      } else if (code != null && code != 4000) {
+        unloadSocket();
+
+        context.replace("/");
+      }
+
+      if (msgListController.position.maxScrollExtent > 0) {
+        msgListController.jumpTo(
+          msgListController.position.maxScrollExtent + 100,
+        );
+      }
+    });
+  }
+
+  void onDispose() {
+    socketEffect();
+  }
+
+  void onInit(BuildContext context) {
+    windowManager.setSize(const Size(1600, 900));
+    windowManager.center();
+
+    socketEffect = effect(() async {
+      if (userInfoManager.token.value.isNotEmpty) {
+        setupSocket(context);
+      }
+
+      if (userInfoManager.token.value.isEmpty) {
+        if (socket != null) {
+          unloadSocket();
+
+          context.replace("/");
+        }
+
+        return;
+      }
+
+      setupSocket(context);
+    });
+  }
+}
