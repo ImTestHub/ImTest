@@ -54,7 +54,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final msgList = controller.state.msgList.watch(context),
-        content = controller.state.content.watch(context);
+        content = controller.state.content.watch(context),
+        notifyServiceID = controller.state.notifyServiceID.watch(context);
 
     final serviceList = userInfoManager.serviceList.watch(context),
         currentServiceID = userInfoManager.currentServiceID.watch(context);
@@ -78,6 +79,7 @@ class _HomePageState extends State<HomePage> {
     final session = Session(
       serviceList: serviceList,
       currentServiceID: currentServiceID,
+      notifyServiceID: notifyServiceID,
       onTap: (service) => controller.handleServiceTap(service, context),
     );
 

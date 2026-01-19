@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:im_test/api/login.dart';
 import 'package:im_test/http/init.dart';
 import 'package:im_test/models/base.dart';
@@ -14,6 +15,16 @@ class LoginController {
   final pwdController = TextEditingController();
 
   final envController = TextEditingController();
+
+  void onInit() {
+    userNameController.text = Hive.box(
+      "cache",
+    ).get("username", defaultValue: "");
+
+    pwdController.text = Hive.box("cache").get("password", defaultValue: "");
+
+    envController.text = Hive.box("cache").get("env", defaultValue: "");
+  }
 
   void handleSubmit(BuildContext context) {
     if (formKey.currentState?.validate() ?? false) {
@@ -33,6 +44,12 @@ class LoginController {
         userInfoManager.setAccount(res.account);
 
         userInfoManager.refreshServiceList();
+
+        Hive.box("cache").put("username", userNameController.text);
+
+        Hive.box("cache").put("password", pwdController.text);
+
+        Hive.box("cache").put("env", envController.text);
 
         context.replace("/home");
       });

@@ -49,26 +49,24 @@ class HomeController {
 
   final ScrollController msgListController = ScrollController();
 
-  void handleMinimize() {
-    windowManager.minimize();
-  }
+  void updateMsg({String? serviceID, required List<MsgEntity> value}) {
+    final currentServiceID =
+        serviceID ?? userInfoManager.currentServiceID.value;
 
-  void handleMaximize(bool isMaximized) {
-    if (isMaximized) {
-      windowManager.unmaximize();
-
-      return;
+    if (state.msgList.value.containsKey(serviceID)) {
+      state.msgList.update(currentServiceID, (_) => value);
+    } else {
+      state.msgList.value.putIfAbsent(currentServiceID, () => value);
     }
-
-    windowManager.maximize();
-  }
-
-  void handleClose() async {
-    windowManager.close();
   }
 
   void handleServiceTap(ServiceEntity service, BuildContext context) {
     userInfoManager.setCurrentServiceID(service.service_id);
+
+    if (state.notifyServiceID.value.contains(service.service_id)) {
+      state.notifyServiceID.value = state.notifyServiceID.value
+        ..remove(service.service_id);
+    }
 
     drawerController.hideDrawer();
   }
@@ -122,9 +120,9 @@ class HomeController {
       ),
     );
 
-    state.msgList.update(
-      userInfoManager.currentServiceID.value,
-      (_) => currentMsgList,
+    updateMsg(
+      serviceID: userInfoManager.currentServiceID.value,
+      value: currentMsgList,
     );
   }
 
@@ -173,9 +171,16 @@ class HomeController {
             ),
           ]);
 
-          state.msgList[service_id] = currentMsgList;
+          updateMsg(serviceID: service_id, value: currentMsgList);
         }
       } else if (msgtype == "text") {
+        if (userInfoManager.currentServiceID.value != service_id) {
+          state.notifyServiceID.value = [
+            ...state.notifyServiceID.value,
+            service_id,
+          ];
+        }
+
         currentMsgList.add(
           MsgEntity(
             id: int.parse(msgid),
@@ -185,7 +190,7 @@ class HomeController {
           ),
         );
 
-        state.msgList[service_id] = currentMsgList;
+        updateMsg(serviceID: service_id, value: currentMsgList);
       }
 
       if (code == 4001 || code == 4002 || code == 4003) {

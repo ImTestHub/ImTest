@@ -5,6 +5,10 @@ Future<void> onInit({required bool isDesktop}) async {
 
   Request();
 
+  await Hive.initFlutter();
+
+  await Hive.openBox("cache");
+
   if (isDesktop) {
     await windowManager.ensureInitialized();
 

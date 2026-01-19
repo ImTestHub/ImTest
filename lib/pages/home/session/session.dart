@@ -4,12 +4,14 @@ import 'package:im_test/entity/service.dart';
 class Session extends StatelessWidget {
   final List<ServiceEntity> serviceList;
   final String? currentServiceID;
+  final List<String> notifyServiceID;
   final Function(ServiceEntity) onTap;
 
   const Session({
     super.key,
     required this.serviceList,
     required this.currentServiceID,
+    required this.notifyServiceID,
     required this.onTap,
   });
 
@@ -53,6 +55,9 @@ class Session extends StatelessWidget {
                         color: active ? Colors.white : null,
                       ),
                     ),
+                    trailing: notifyServiceID.contains(service.service_id)
+                        ? Text("有新消息")
+                        : null,
                     onTap: () => onTap(service),
                   ),
                 );
