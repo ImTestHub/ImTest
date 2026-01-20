@@ -20,6 +20,8 @@ import 'package:im_test/pages/home/session/session.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:windows_notification/notification_message.dart';
+import 'package:windows_notification/windows_notification.dart';
 
 part 'controller.dart';
 

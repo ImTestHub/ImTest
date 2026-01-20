@@ -29,6 +29,8 @@ List<Map<String, dynamic>> timeLine(
 class HomeController {
   WebSocketChannel? socket;
 
+  final _winNotifyPlugin = WindowsNotification(applicationId: "在线客服聊天系统(客服侧)");
+
   late final EffectCleanup socketEffect;
 
   StreamSubscription<dynamic>? streamListener;
@@ -58,6 +60,16 @@ class HomeController {
     } else {
       state.msgList.value.putIfAbsent(currentServiceID, () => value);
     }
+  }
+
+  void showNotification(String content) {
+    NotificationMessage notification = NotificationMessage.fromPluginTemplate(
+      "test1",
+      "有新消息",
+      content,
+    );
+
+    _winNotifyPlugin.showNotificationPluginTemplate(notification);
   }
 
   void handleServiceTap(ServiceEntity service, BuildContext context) {
@@ -143,7 +155,7 @@ class HomeController {
 
     socket!.sink.add(jsonEncode({"msgtype": "event_staff_online"}));
 
-    streamListener = socket!.stream.listen((res) {
+    streamListener = socket!.stream.listen((res) async {
       final message = jsonDecode(res);
 
       final msgtype = message?["msgtype"],
@@ -174,6 +186,10 @@ class HomeController {
           updateMsg(serviceID: service_id, value: currentMsgList);
         }
       } else if (msgtype == "text") {
+        if (!await windowManager.isFocused()) {
+          showNotification(message["text"]['text']);
+        }
+
         if (userInfoManager.currentServiceID.value != service_id) {
           state.notifyServiceID.value = [
             ...state.notifyServiceID.value,

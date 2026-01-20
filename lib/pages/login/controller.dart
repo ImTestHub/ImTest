@@ -6,6 +6,8 @@ import 'package:im_test/api/login.dart';
 import 'package:im_test/http/init.dart';
 import 'package:im_test/models/base.dart';
 import 'package:im_test/models/user_info.dart';
+import 'package:windows_notification/notification_message.dart';
+import 'package:windows_notification/windows_notification.dart';
 
 class LoginController {
   final GlobalKey<FormState> formKey = GlobalKey();
