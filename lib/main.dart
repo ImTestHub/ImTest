@@ -4,7 +4,7 @@ import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
-import 'package:hive_ce/hive.dart';
+import 'package:hive_ce/hive_ce.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:im_test/helper/update/update.dart';
 import 'package:im_test/http/init.dart';
@@ -14,7 +14,7 @@ import 'package:window_manager/window_manager.dart';
 
 part 'main.g.dart';
 
-void main() {
+void main() async {
   late final isDesktop;
 
   if (!kIsWeb) {
@@ -23,7 +23,7 @@ void main() {
     isDesktop = false;
   }
 
-  onInit(isDesktop: isDesktop);
+  await onInit(isDesktop: isDesktop);
 
   runApp(const App());
 }
