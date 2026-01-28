@@ -69,7 +69,7 @@ class AppTheme {
       iconTheme: IconThemeData(size: 18, color: colorScheme.onSurface),
       inputDecorationTheme: InputDecorationTheme(
         constraints: BoxConstraints(maxHeight: 66),
-        fillColor: isDark == true ? Color(0xff212121) : Colors.white,
+        fillColor: cardColor,
         filled: true,
         hintStyle: TextStyle(fontSize: 14),
         contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),

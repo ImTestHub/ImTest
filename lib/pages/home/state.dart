@@ -6,4 +6,6 @@ class HomeState {
   final content = signal("");
 
   final notifyServiceID = signal<List<String>>([]);
+
+  final menuOpen = signal(true);
 }

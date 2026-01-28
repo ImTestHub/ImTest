@@ -30,7 +30,6 @@ class _LoginPageState extends State<LoginPage> {
           child: Container(
             width: 400,
             height: 600,
-            color: theme.cardTheme.color,
             child: Column(
               crossAxisAlignment: .start,
               mainAxisAlignment: .center,

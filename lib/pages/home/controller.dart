@@ -84,7 +84,13 @@ class HomeController {
   }
 
   void handleOpenDrawer() {
-    drawerController.toggleDrawer();
+    final isWindows = baseManager.platform.value == PlatformType.windows;
+
+    if (isWindows) {
+      state.menuOpen.value = !state.menuOpen.value;
+    } else {
+      drawerController.toggleDrawer();
+    }
   }
 
   void handleContentChange(String value) {

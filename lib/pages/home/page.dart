@@ -57,7 +57,8 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final msgList = controller.state.msgList.watch(context),
         content = controller.state.content.watch(context),
-        notifyServiceID = controller.state.notifyServiceID.watch(context);
+        notifyServiceID = controller.state.notifyServiceID.watch(context),
+        menuOpen = controller.state.menuOpen.watch(context);
 
     final serviceList = userInfoManager.serviceList.watch(context),
         currentServiceID = userInfoManager.currentServiceID.watch(context);
@@ -79,6 +80,7 @@ class _HomePageState extends State<HomePage> {
     final isWindows = computed(() => platform == PlatformType.windows);
 
     final session = Session(
+      open: menuOpen,
       serviceList: serviceList,
       currentServiceID: currentServiceID,
       notifyServiceID: notifyServiceID,
@@ -98,12 +100,16 @@ class _HomePageState extends State<HomePage> {
                 pinned: true,
                 title: IgnorePointer(child: Text("在线客服聊天系统(客服侧)")),
                 expandedHeight: kToolbarHeight + 32 + 66,
-                leading: !isWindows()
-                    ? IconButton(
-                        onPressed: controller.handleOpenDrawer,
-                        icon: Icon(Icons.menu),
-                      )
-                    : null,
+                leading: IconButton(
+                  onPressed: controller.handleOpenDrawer,
+                  icon: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: Icon(
+                      menuOpen ? Icons.menu_open : Icons.menu,
+                      key: ValueKey(menuOpen),
+                    ),
+                  ),
+                ),
                 actionsPadding: EdgeInsets.only(right: 12),
                 flexibleSpace: Stack(
                   fit: StackFit.expand,
@@ -224,7 +230,7 @@ class _HomePageState extends State<HomePage> {
               child: Container(
                 height: 88,
                 padding: EdgeInsets.symmetric(horizontal: 16),
-                color: theme.appBarTheme.backgroundColor!.withAlpha(33),
+                color: theme.appBarTheme.backgroundColor!.withAlpha(100),
                 child: Row(
                   spacing: 16,
                   children: [
@@ -241,12 +247,13 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     IconButton(
-                      onPressed: content.isNotEmpty
+                      onPressed:
+                          content.isNotEmpty && currentServiceID.isNotEmpty
                           ? controller.handleSend
                           : null,
                       icon: Icon(
                         Icons.send,
-                        color: content.isNotEmpty
+                        color: content.isNotEmpty && currentServiceID.isNotEmpty
                             ? theme.colorScheme.primary
                             : theme.colorScheme.onSurface.withAlpha(100),
                       ),
@@ -263,8 +270,8 @@ class _HomePageState extends State<HomePage> {
     if (isWindows()) {
       return Row(
         children: [
-          Flexible(flex: 1, child: session),
-          Flexible(flex: 3, child: chat),
+          session,
+          Flexible(flex: 1, child: chat),
         ],
       );
     }
