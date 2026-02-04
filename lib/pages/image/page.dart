@@ -13,6 +13,8 @@ class ImagePage extends StatelessWidget {
 
     final theme = Theme.of(context);
 
+    final id = GoRouterState.of(context).pathParameters["id"]!;
+
     final cover = extra["cover"] as Uint8List?;
 
     return GestureDetector(
@@ -24,7 +26,7 @@ class ImagePage extends StatelessWidget {
           children: [
             Center(
               child: Hero(
-                tag: "image",
+                tag: id,
                 child: Image.memory(
                   cover!,
                   gaplessPlayback: true,

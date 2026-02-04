@@ -133,7 +133,7 @@ class MsgList extends StatelessWidget {
                     ),
                   ),
                   image: SourceImage(
-                    tag: "image",
+                    tag: msg.id.toString(),
                     sourceID: msg.content,
                     onTap: (cover) => context.push(
                       "/image/${msg.id}",
