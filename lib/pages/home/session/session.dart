@@ -76,6 +76,7 @@ class Session extends StatelessWidget {
                         style: theme.textTheme.bodyMedium!.copyWith(
                           color: active ? Colors.white : null,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       trailing: notifyServiceID.contains(service.service_id)
                           ? Text("有新消息")

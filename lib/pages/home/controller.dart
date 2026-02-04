@@ -29,6 +29,8 @@ List<Map<String, dynamic>> timeLine(
 class HomeController {
   WebSocketChannel? socket;
 
+  final panelController = PanelController();
+
   final _winNotifyPlugin = WindowsNotification(applicationId: "在线客服聊天系统(客服侧)");
 
   late final EffectCleanup socketEffect;
@@ -83,6 +85,51 @@ class HomeController {
     drawerController.hideDrawer();
   }
 
+  Future<void> handleSelectImage() async {
+    final res = await ImageHelper().selectImage();
+
+    if (res != null) {
+      final data = FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          res["data"],
+          filename: res["file"].name,
+        ),
+      });
+
+      final uploadRes = await API.upload(data);
+
+      final sendid = DateTime.now().millisecondsSinceEpoch;
+
+      socket!.sink.add(
+        jsonEncode({
+          "msgtype": "image",
+          "url": {"url": uploadRes.source_id},
+          "sendid": sendid,
+          "serviceId": userInfoManager.currentServiceID.value,
+        }),
+      );
+
+      final List<MsgEntity> currentMsgList = List.from(
+        state.msgList.value[userInfoManager.currentServiceID.value] ?? [],
+      );
+
+      currentMsgList.add(
+        MsgEntity(
+          id: sendid,
+          content: uploadRes.source_id,
+          type: MsgType.send,
+          contentType: ContentType.image,
+          createAt: DateTime.now().millisecondsSinceEpoch,
+        ),
+      );
+
+      updateMsg(
+        serviceID: userInfoManager.currentServiceID.value,
+        value: currentMsgList,
+      );
+    }
+  }
+
   void handleOpenDrawer() {
     final isWindows = baseManager.platform.value == PlatformType.windows;
 
@@ -134,6 +181,7 @@ class HomeController {
         id: sendid,
         content: text,
         type: MsgType.send,
+        contentType: ContentType.text,
         createAt: DateTime.now().millisecondsSinceEpoch,
       ),
     );
@@ -178,7 +226,7 @@ class HomeController {
         userInfoManager.refreshServiceList();
       } else if (msgtype == "msg_confirm") {
         final index = currentMsgList.indexWhere(
-          (msg) => msg.id.toString() == sendid,
+          (msg) => msg.id.toString() == sendid.toString(),
         );
 
         if (index != -1) {
@@ -208,6 +256,7 @@ class HomeController {
             id: int.parse(msgid),
             content: message["text"]['text'],
             type: MsgType.receive,
+            contentType: ContentType.text,
             createAt: DateTime.now().millisecondsSinceEpoch,
           ),
         );

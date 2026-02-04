@@ -39,7 +39,6 @@ class BubbleNormalImage extends StatelessWidget {
     child: CircularProgressIndicator(),
   );
 
-  final String id;
   final Widget image;
   final double bubbleRadius;
   final bool isSender;
@@ -52,18 +51,19 @@ class BubbleNormalImage extends StatelessWidget {
   final VoidCallback? onLongPress;
   final Widget? leading;
   final Widget? trailing;
+  final Widget? date;
   final EdgeInsets? margin;
   final EdgeInsets? padding;
 
   const BubbleNormalImage({
     Key? key,
-    required this.id,
     required this.image,
     this.bubbleRadius = BUBBLE_RADIUS_IMAGE,
     this.margin = EdgeInsets.zero,
     this.padding = const EdgeInsets.fromLTRB(16, 8, 16, 8),
     this.leading,
     this.trailing,
+    this.date,
     this.isSender = true,
     this.color = Colors.white70,
     this.tail = true,
@@ -105,14 +105,11 @@ class BubbleNormalImage extends StatelessWidget {
     }
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisAlignment:
+          isSender ? MainAxisAlignment.end : MainAxisAlignment.start,
       children: <Widget>[
-        isSender
-            ? const Expanded(
-                child: SizedBox(
-                  width: 5,
-                ),
-              )
-            : leading ?? Container(),
+        if (!isSender) leading ?? Container(),
         Container(
           padding: padding,
           margin: margin,
@@ -121,60 +118,52 @@ class BubbleNormalImage extends StatelessWidget {
             maxHeight: MediaQuery.of(context).size.width * .5,
           ),
           child: GestureDetector(
-              child: Hero(
-                tag: id,
-                child: Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: color,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(bubbleRadius),
-                          topRight: Radius.circular(bubbleRadius),
-                          bottomLeft: Radius.circular(tail
-                              ? isSender
-                                  ? bubbleRadius
-                                  : 0
-                              : BUBBLE_RADIUS_IMAGE),
-                          bottomRight: Radius.circular(tail
-                              ? isSender
-                                  ? 0
-                                  : bubbleRadius
-                              : BUBBLE_RADIUS_IMAGE),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(bubbleRadius),
-                          child: image,
-                        ),
+              onLongPress: onLongPress,
+              onTap: onTap,
+              child: Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(bubbleRadius),
+                        topRight: Radius.circular(bubbleRadius),
+                        bottomLeft: Radius.circular(tail
+                            ? isSender
+                                ? bubbleRadius
+                                : 0
+                            : BUBBLE_RADIUS_IMAGE),
+                        bottomRight: Radius.circular(tail
+                            ? isSender
+                                ? 0
+                                : bubbleRadius
+                            : BUBBLE_RADIUS_IMAGE),
                       ),
                     ),
-                    stateIcon != null && stateTick
-                        ? Positioned(
-                            bottom: 4,
-                            right: 6,
-                            child: stateIcon,
-                          )
-                        : SizedBox(
-                            width: 1,
-                          ),
-                  ],
-                ),
-              ),
-              onLongPress: onLongPress,
-              onTap: onTap ??
-                  () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) {
-                      return _DetailScreen(
-                        tag: id,
-                        image: image,
-                      );
-                    }));
-                  }),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(bubbleRadius),
+                        child: image,
+                      ),
+                    ),
+                  ),
+                  if (date != null)
+                    Positioned(
+                        bottom: 4, right: stateTick ? 26 : 6, child: date!),
+                  stateIcon != null && stateTick
+                      ? Positioned(
+                          bottom: 4,
+                          right: 6,
+                          child: stateIcon,
+                        )
+                      : SizedBox(
+                          width: 1,
+                        ),
+                ],
+              )),
         ),
-        if (isSender && trailing != null) SizedBox.shrink(),
+        if (isSender) leading ?? Container(),
       ],
     );
   }

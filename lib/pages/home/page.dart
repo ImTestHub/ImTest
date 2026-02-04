@@ -5,14 +5,19 @@ import 'dart:ui';
 import 'package:chat_bubbles/bubbles/bubble_normal.dart';
 import 'package:chat_bubbles/chat_bubbles.dart';
 import 'package:common_utils/common_utils.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_advanced_avatar/flutter_advanced_avatar.dart';
 import 'package:flutter_advanced_drawer/flutter_advanced_drawer.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:go_router/go_router.dart';
 import 'package:im_test/api/api.dart';
+import 'package:im_test/components/sliding_up_panel/sliding_up_panel.dart';
+import 'package:im_test/components/source_image/source_image.dart';
 import 'package:im_test/entity/msg.dart';
 import 'package:im_test/entity/service.dart';
+import 'package:im_test/helper/image.dart';
 import 'package:im_test/models/base.dart';
 import 'package:im_test/models/user_info.dart';
 import 'package:im_test/pages/home/info_card/info_card.dart';
@@ -58,7 +63,8 @@ class _HomePageState extends State<HomePage> {
     final msgList = controller.state.msgList.watch(context),
         content = controller.state.content.watch(context),
         notifyServiceID = controller.state.notifyServiceID.watch(context),
-        menuOpen = controller.state.menuOpen.watch(context);
+        menuOpen = controller.state.menuOpen.watch(context),
+        panelOpen = controller.state.panelOpen.watch(context);
 
     final serviceList = userInfoManager.serviceList.watch(context),
         currentServiceID = userInfoManager.currentServiceID.watch(context);
@@ -85,6 +91,61 @@ class _HomePageState extends State<HomePage> {
       currentServiceID: currentServiceID,
       notifyServiceID: notifyServiceID,
       onTap: (service) => controller.handleServiceTap(service, context),
+    );
+
+    final input = ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: Container(
+          height: 88,
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          color: theme.appBarTheme.backgroundColor!.withAlpha(100),
+          child: Row(
+            spacing: 16,
+            children: [
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () {},
+                    icon: Icon(Icons.emoji_emotions),
+                  ),
+                  IconButton(
+                    onPressed: () => controller.panelController.isPanelOpen
+                        ? controller.panelController.close()
+                        : controller.panelController.open(),
+                    icon: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: Icon(
+                        key: ValueKey(panelOpen),
+                        panelOpen ? Icons.close : Icons.add,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Flexible(
+                child: TextFormField(
+                  decoration: InputDecoration(hint: Text("请输入")),
+                  controller: controller.textController,
+                  onChanged: controller.handleContentChange,
+                  onEditingComplete: controller.handleSend,
+                ),
+              ),
+              IconButton(
+                onPressed: content.isNotEmpty && currentServiceID.isNotEmpty
+                    ? controller.handleSend
+                    : null,
+                icon: Icon(
+                  Icons.send,
+                  color: content.isNotEmpty && currentServiceID.isNotEmpty
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withAlpha(100),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
 
     final chat = Scaffold(
@@ -184,37 +245,73 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           ),
-                        BubbleNormal(
-                          sent: msg.confirmed ?? false,
-                          leading: AdvancedAvatar(
-                            decoration: BoxDecoration(
-                              color: theme.cardTheme.color!.withAlpha(200),
-                              shape: BoxShape.circle,
+                        if (msg.contentType == ContentType.text)
+                          BubbleNormal(
+                            sent: msg.confirmed ?? false,
+                            leading: AdvancedAvatar(
+                              decoration: BoxDecoration(
+                                color: theme.cardTheme.color!.withAlpha(200),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            text: msg.content,
+                            date: Text(
+                              DateUtil.formatDateMs(
+                                msg.createAt,
+                                format: DateFormats.h_m,
+                              ),
+                              style: theme.textTheme.bodySmall!.copyWith(
+                                color:
+                                    (isSender
+                                            ? Colors.white
+                                            : theme.textTheme.bodySmall!.color!)
+                                        .withAlpha(100),
+                              ),
+                            ),
+                            isSender: msg.type == MsgType.send,
+                            color: isSender
+                                ? theme.colorScheme.primary
+                                : theme.cardTheme.color!,
+                            tail: true,
+                            textStyle: theme.textTheme.bodyMedium!.copyWith(
+                              color: isSender ? Colors.white : null,
+                            ),
+                          )
+                        else if (msg.contentType == ContentType.image)
+                          BubbleNormalImage(
+                            color: isSender
+                                ? theme.colorScheme.primary
+                                : theme.cardTheme.color!,
+                            tail: true,
+                            sent: msg.confirmed ?? false,
+                            date: Text(
+                              DateUtil.formatDateMs(
+                                msg.createAt,
+                                format: DateFormats.h_m,
+                              ),
+                              style: theme.textTheme.bodySmall!.copyWith(
+                                color:
+                                    (isSender
+                                            ? Colors.white
+                                            : theme.textTheme.bodySmall!.color!)
+                                        .withAlpha(100),
+                              ),
+                            ),
+                            leading: AdvancedAvatar(
+                              decoration: BoxDecoration(
+                                color: theme.cardTheme.color!.withAlpha(200),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            image: SourceImage(
+                              tag: "image",
+                              sourceID: msg.content,
+                              onTap: (cover) => context.push(
+                                "/image/${msg.id}",
+                                extra: {"cover": cover},
+                              ),
                             ),
                           ),
-                          text: msg.content,
-                          date: Text(
-                            DateUtil.formatDateMs(
-                              msg.createAt,
-                              format: DateFormats.h_m,
-                            ),
-                            style: theme.textTheme.bodySmall!.copyWith(
-                              color:
-                                  (isSender
-                                          ? Colors.white
-                                          : theme.textTheme.bodySmall!.color!)
-                                      .withAlpha(100),
-                            ),
-                          ),
-                          isSender: msg.type == MsgType.send,
-                          color: isSender
-                              ? theme.colorScheme.primary
-                              : theme.cardTheme.color!,
-                          tail: true,
-                          textStyle: theme.textTheme.bodyMedium!.copyWith(
-                            color: isSender ? Colors.white : null,
-                          ),
-                        ),
                       ],
                     );
                   },
@@ -224,44 +321,44 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
 
-          ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-              child: Container(
-                height: 88,
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                color: theme.appBarTheme.backgroundColor!.withAlpha(100),
-                child: Row(
-                  spacing: 16,
-                  children: [
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.emoji_emotions),
-                    ),
-                    Flexible(
-                      child: TextFormField(
-                        decoration: InputDecoration(hint: Text("请输入")),
-                        controller: controller.textController,
-                        onChanged: controller.handleContentChange,
-                        onEditingComplete: controller.handleSend,
+          SlidingUpPanel(
+            controller: controller.panelController,
+            minHeight: 88,
+            color: theme.appBarTheme.backgroundColor!.withAlpha(100),
+            maxHeight: MediaQuery.of(context).size.height * 0.3,
+            panel: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                input,
+                Container(
+                  padding: EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      GestureDetector(
+                        onTap: controller.handleSelectImage,
+                        child: Card(
+                          child: Container(
+                            width: 88,
+                            height: 88,
+                            padding: EdgeInsets.all(16),
+                            child: Column(
+                              spacing: 4,
+                              children: [
+                                Icon(Icons.photo, size: 32),
+                                Text("图片"),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed:
-                          content.isNotEmpty && currentServiceID.isNotEmpty
-                          ? controller.handleSend
-                          : null,
-                      icon: Icon(
-                        Icons.send,
-                        color: content.isNotEmpty && currentServiceID.isNotEmpty
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface.withAlpha(100),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
+            body: const SizedBox(),
+            collapsed: input,
           ),
         ],
       ),

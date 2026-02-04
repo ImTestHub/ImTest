@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:im_test/helper/platform.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -41,9 +42,11 @@ class BaseManager {
       _platform.value = PlatformType.macOS;
     }
 
-    windowManager.isMaximized().then((res) {
-      _isMaximized.value = res;
-    });
+    if (PlatformHelper.isDesktop) {
+      windowManager.isMaximized().then((res) {
+        _isMaximized.value = res;
+      });
+    }
   }
 
   void setPlatform(PlatformType value) {

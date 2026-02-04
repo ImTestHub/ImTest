@@ -1,6 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
 import 'package:im_test/entity/service.dart';
+import 'package:im_test/entity/source.dart';
 import 'package:im_test/http/init.dart';
 
 class API {
@@ -34,5 +38,33 @@ class API {
         : [];
 
     return newToken;
+  }
+
+  static Future<SourceEntity> upload(FormData data) async {
+    final res = await Request().post<String>("/upload", data: data);
+
+    return SourceEntity.fromJson(jsonDecode(res.data)["data"]);
+  }
+
+  static Future<Uint8List?> source(String source_id) async {
+    late final d;
+
+    final res = await Request().get<String>(
+      "/source",
+      queryParameters: {"source_id": source_id},
+      options: Options(
+        responseDecoder:
+            (
+              List<int> responseBytes,
+              RequestOptions options,
+              ResponseBody responseBody,
+            ) {
+              d = responseBytes;
+              return responseBytes.toString();
+            },
+      ),
+    );
+
+    return Uint8List.fromList(d);
   }
 }

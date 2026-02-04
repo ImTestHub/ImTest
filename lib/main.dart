@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
+import 'package:im_test/helper/platform.dart';
 import 'package:im_test/helper/update/update.dart';
 import 'package:im_test/http/init.dart';
 import 'package:im_test/router/router.dart';
@@ -16,13 +17,7 @@ import 'package:window_manager/window_manager.dart';
 part 'main.g.dart';
 
 void main() async {
-  bool isDesktop = false;
-
-  if (!kIsWeb) {
-    isDesktop = Platform.isWindows || Platform.isLinux || Platform.isMacOS;
-  }
-
-  await onInit(isDesktop: isDesktop);
+  await onInit();
 
   runApp(const App());
 }
@@ -81,8 +76,8 @@ class _AppState extends State<App> with TrayListener {
       title: "在线客服聊天系统(客服侧)",
       debugShowCheckedModeBanner: false,
       routerConfig: router,
-      theme: AppTheme.theme().useSystemChineseFont(Brightness.light),
-      darkTheme: AppTheme.darkTheme().useSystemChineseFont(Brightness.dark),
+      theme: AppTheme.theme(),
+      darkTheme: AppTheme.darkTheme(),
     );
   }
 }

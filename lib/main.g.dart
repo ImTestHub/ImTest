@@ -1,6 +1,6 @@
 part of 'main.dart';
 
-Future<void> onInit({required bool isDesktop}) async {
+Future<void> onInit() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   Request();
@@ -9,7 +9,7 @@ Future<void> onInit({required bool isDesktop}) async {
 
   await Hive.openBox("cache");
 
-  if (isDesktop) {
+  if (PlatformHelper.isDesktop) {
     await windowManager.ensureInitialized();
 
     UpdateHelper.checkUpdate();
@@ -23,8 +23,12 @@ Future<void> onInit({required bool isDesktop}) async {
     );
 
     windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.show();
-      await windowManager.focus();
+      await windowManager.center();
+
+      Future.delayed(const Duration(milliseconds: 500)).then((_) async {
+        await windowManager.show();
+        await windowManager.focus();
+      });
     });
 
     trayManager.setIcon(
