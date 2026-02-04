@@ -90,6 +90,50 @@ class Request {
     }
   }
 
+  Future<List<int>> getUpload<T>(
+    String url, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      late final res;
+
+      await dio.get<T>(
+        url,
+        queryParameters: queryParameters,
+        options: options != null
+            ? options.copyWith(
+                responseDecoder:
+                    (
+                      List<int> responseBytes,
+                      RequestOptions options,
+                      ResponseBody responseBody,
+                    ) {
+                      res = responseBytes;
+                      return responseBytes.toString();
+                    },
+              )
+            : Options(
+                responseDecoder:
+                    (
+                      List<int> responseBytes,
+                      RequestOptions options,
+                      ResponseBody responseBody,
+                    ) {
+                      res = responseBytes;
+                      return responseBytes.toString();
+                    },
+              ),
+        cancelToken: cancelToken,
+      );
+
+      return res;
+    } on DioException catch (e) {
+      return [];
+    }
+  }
+
   Future<Response> post<T>(
     String url, {
     Object? data,

@@ -47,24 +47,11 @@ class API {
   }
 
   static Future<Uint8List?> source(String source_id) async {
-    late final d;
-
-    final res = await Request().get<String>(
+    final res = await Request().getUpload(
       "/source",
       queryParameters: {"source_id": source_id},
-      options: Options(
-        responseDecoder:
-            (
-              List<int> responseBytes,
-              RequestOptions options,
-              ResponseBody responseBody,
-            ) {
-              d = responseBytes;
-              return responseBytes.toString();
-            },
-      ),
     );
 
-    return Uint8List.fromList(d);
+    return Uint8List.fromList(res);
   }
 }

@@ -8,6 +8,4 @@ class HomeState {
   final notifyServiceID = signal<List<String>>([]);
 
   final menuOpen = signal(true);
-
-  final panelOpen = signal(false);
 }

@@ -1,31 +1,5 @@
 part of 'page.dart';
 
-List<Map<String, dynamic>> timeLine(
-  List<MsgEntity> items, {
-  String dateFormat = 'yyyy-MM-dd',
-}) {
-  final Map<String, Map<String, dynamic>> dayMap = {};
-
-  for (final item in items) {
-    final dateStr = DateUtil.formatDateMs(
-      item.createAt,
-      format: DateFormats.y_mo_d,
-    );
-
-    if (!dayMap.containsKey(dateStr) ||
-        item.createAt < dayMap[dateStr]!["timestamp"]) {
-      dayMap[dateStr] = {
-        "timestamp": item.createAt,
-        "id": item.id,
-        "dateStr": dateStr,
-      };
-    }
-  }
-
-  return dayMap.values.toList()
-    ..sort((a, b) => a["timestamp"].compareTo(b["timestamp"]));
-}
-
 class HomeController {
   WebSocketChannel? socket;
 
@@ -62,6 +36,8 @@ class HomeController {
     } else {
       state.msgList.value.putIfAbsent(currentServiceID, () => value);
     }
+
+    state.msgList.notifyListeners();
   }
 
   void showNotification(String content) {
