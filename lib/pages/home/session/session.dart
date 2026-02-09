@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:im_test/entity/service.dart';
+import 'package:im_test/helper/platform.dart';
+import 'package:im_test/models/base.dart';
+import 'package:signals/signals_flutter.dart';
 
 class Session extends StatelessWidget {
   final bool open;
@@ -25,8 +28,13 @@ class Session extends StatelessWidget {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 100),
-      width: open ? width * 0.2 : 0,
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      width: (PlatformHelper.isDesktop && open) ? width * 0.2 : 0,
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top,
+        16,
+        0,
+      ),
       decoration: BoxDecoration(
         border: Border(
           right: BorderSide(

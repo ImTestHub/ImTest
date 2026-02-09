@@ -28,7 +28,7 @@ class SlidingUpPanel extends StatefulWidget {
 
   /// The Widget displayed overtop the [panel] when collapsed.
   /// This fades out as the panel is opened.
-  final Widget collapsed;
+  // final Widget collapsed;
 
   /// The Widget that lies underneath the sliding panel.
   /// This Widget automatically sizes itself
@@ -87,7 +87,6 @@ class SlidingUpPanel extends StatefulWidget {
     this.color,
     required this.panel,
     required this.body,
-    required this.collapsed,
     this.minHeight = 100.0,
     this.maxHeight = 500.0,
     this.snapPoint,
@@ -389,15 +388,7 @@ class SlidingUpPanelState extends State<SlidingUpPanel>
                           valueListenable: _ac,
                           builder: (context, value, child) => Builder(
                             builder: (context) {
-                              return AnimatedContainer(
-                                curve: Curves.easeInOutSine,
-                                duration: Duration(
-                                  milliseconds: widget.minHeight == 0
-                                      ? 500
-                                      : value > 0
-                                      ? 0
-                                      : 500,
-                                ),
+                              return SizedBox(
                                 height:
                                     value *
                                         (widget.maxHeight - widget.minHeight) +
@@ -410,35 +401,9 @@ class SlidingUpPanelState extends State<SlidingUpPanel>
                                         children: [
                                           RepaintBoundary(
                                             key: const ValueKey("panel"),
-                                            child: IgnorePointer(
-                                              ignoring: value != 1,
-                                              child: AnimatedOpacity(
-                                                opacity: value < 0.02
-                                                    ? value * 50
-                                                    : 1,
-                                                duration: const Duration(
-                                                  milliseconds: 50,
-                                                ),
-                                                child: SizedBox(
-                                                  height: widget.maxHeight,
-                                                  child: widget.panel,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          RepaintBoundary(
-                                            key: const ValueKey("collapsed"),
-                                            child: IgnorePointer(
-                                              ignoring: value != 0,
-                                              child: AnimatedOpacity(
-                                                duration: const Duration(
-                                                  milliseconds: 50,
-                                                ),
-                                                opacity: value < 0.02
-                                                    ? 1 - value * 50
-                                                    : 0,
-                                                child: widget.collapsed,
-                                              ),
+                                            child: SizedBox(
+                                              height: widget.maxHeight,
+                                              child: widget.panel,
                                             ),
                                           ),
                                         ],

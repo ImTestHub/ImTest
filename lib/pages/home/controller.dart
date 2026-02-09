@@ -3,8 +3,6 @@ part of 'page.dart';
 class HomeController {
   WebSocketChannel? socket;
 
-  final panelController = PanelController();
-
   final _winNotifyPlugin = WindowsNotification(applicationId: "在线客服聊天系统(客服侧)");
 
   late final EffectCleanup socketEffect;
@@ -68,7 +66,7 @@ class HomeController {
       final data = FormData.fromMap({
         'file': MultipartFile.fromBytes(
           res["data"],
-          filename: res["file"].name,
+          filename: (res["file"] as XFile).name,
         ),
       });
 
@@ -79,7 +77,7 @@ class HomeController {
       socket!.sink.add(
         jsonEncode({
           "msgtype": "image",
-          "url": {"url": uploadRes.source_id},
+          "image": {"url": uploadRes.source_id},
           "sendid": sendid,
           "serviceId": userInfoManager.currentServiceID.value,
         }),
@@ -109,10 +107,10 @@ class HomeController {
   void handleOpenDrawer() {
     final isWindows = baseManager.platform.value == PlatformType.windows;
 
-    if (isWindows) {
-      state.menuOpen.value = !state.menuOpen.value;
-    } else {
+    if (!isWindows) {
       drawerController.toggleDrawer();
+    } else {
+      state.menuOpen.value = !state.menuOpen.value;
     }
   }
 
@@ -194,6 +192,9 @@ class HomeController {
           code = message?["code"],
           service_id = message?["serviceId"];
 
+      print("来了");
+      print(res);
+
       final List<MsgEntity> currentMsgList = List.from(
         state.msgList.value[service_id] ?? [],
       );
@@ -216,8 +217,10 @@ class HomeController {
           updateMsg(serviceID: service_id, value: currentMsgList);
         }
       } else if (msgtype == "text") {
-        if (!await windowManager.isFocused()) {
-          showNotification(message["text"]['text']);
+        if (PlatformHelper.isDesktop) {
+          if (!await windowManager.isFocused()) {
+            showNotification(message["text"]['text']);
+          }
         }
 
         if (userInfoManager.currentServiceID.value != service_id) {
@@ -238,6 +241,23 @@ class HomeController {
         );
 
         updateMsg(serviceID: service_id, value: currentMsgList);
+      } else if (msgtype == "image") {
+        if (userInfoManager.currentServiceID.value != service_id) {
+          state.notifyServiceID.value = [
+            ...state.notifyServiceID.value,
+            service_id,
+          ];
+        }
+
+        currentMsgList.add(
+          MsgEntity(
+            id: int.parse(msgid),
+            content: message["image"]['url'],
+            type: MsgType.receive,
+            contentType: ContentType.text,
+            createAt: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
       }
 
       if (code == 4001 || code == 4002 || code == 4003) {
@@ -269,6 +289,10 @@ class HomeController {
   void onInit(BuildContext context) {
     windowManager.setSize(const Size(1600, 900));
     windowManager.center();
+
+    drawerController.addListener(() {
+      state.menuOpen.value = drawerController.value.visible;
+    });
 
     socketEffect = effect(() async {
       if (userInfoManager.token.value.isNotEmpty) {

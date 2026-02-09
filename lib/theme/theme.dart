@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_transitions/go_transitions.dart';
+import 'package:im_test/helper/platform.dart';
 
 class AppTheme {
   static TextStyle titleLarge = TextStyle(
@@ -51,7 +52,7 @@ class AppTheme {
     );
 
     return ThemeData(
-      fontFamily: "Arial",
+      fontFamily: PlatformHelper.isDesktop ? "微软雅黑" : null,
       colorScheme: colorScheme,
       appBarTheme: AppBarThemeData(
         backgroundColor: cardColor,
@@ -68,13 +69,13 @@ class AppTheme {
       scaffoldBackgroundColor: backgroundColor,
       iconTheme: IconThemeData(size: 18, color: colorScheme.onSurface),
       inputDecorationTheme: InputDecorationTheme(
-        constraints: BoxConstraints(maxHeight: 66),
+        isCollapsed: true,
         fillColor: cardColor,
         filled: true,
         hintStyle: TextStyle(fontSize: 14),
-        contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(66)),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
           borderSide: BorderSide.none,
         ),
       ),

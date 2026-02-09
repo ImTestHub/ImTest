@@ -125,27 +125,11 @@ class BubbleNormalImage extends StatelessWidget {
                   Container(
                     decoration: BoxDecoration(
                       color: color,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(bubbleRadius),
-                        topRight: Radius.circular(bubbleRadius),
-                        bottomLeft: Radius.circular(tail
-                            ? isSender
-                                ? bubbleRadius
-                                : 0
-                            : BUBBLE_RADIUS_IMAGE),
-                        bottomRight: Radius.circular(tail
-                            ? isSender
-                                ? 0
-                                : bubbleRadius
-                            : BUBBLE_RADIUS_IMAGE),
-                      ),
+                      borderRadius: BorderRadius.circular(bubbleRadius),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(bubbleRadius),
-                        child: image,
-                      ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(bubbleRadius),
+                      child: image,
                     ),
                   ),
                   if (date != null)

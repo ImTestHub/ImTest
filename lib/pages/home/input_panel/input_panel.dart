@@ -1,12 +1,9 @@
-import 'dart:ui';
-
-import 'package:flutter/material.dart';
-import 'package:im_test/components/sliding_up_panel/sliding_up_panel.dart';
-import 'package:signals/signals_flutter.dart';
+part of 'controller.dart';
 
 class InputPanel extends StatefulWidget {
   final TextEditingController textController;
   final String content;
+  final Widget body;
   final String currentServiceID;
   final Function(String) onContentChange;
   final VoidCallback onSend;
@@ -16,6 +13,7 @@ class InputPanel extends StatefulWidget {
     super.key,
     required this.textController,
     required this.content,
+    required this.body,
     required this.currentServiceID,
     required this.onContentChange,
     required this.onSend,
@@ -27,123 +25,151 @@ class InputPanel extends StatefulWidget {
 }
 
 class _InputPanelState extends State<InputPanel> {
-  final panelOpen = signal(false);
+  final controller = InputPanelController();
 
-  final controller = PanelController();
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
 
-  void handleTogglePanel() {
-    if (controller.isPanelOpen) {
-      controller.close();
-    } else {
-      controller.open();
-    }
+    controller.onInit();
+  }
 
-    panelOpen.value = !panelOpen.value;
+  @override
+  void dispose() {
+    controller.onDispose();
+    // TODO: implement dispose
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final _panelOpen = panelOpen.watch(context);
+    final panelOpen = controller.panelOpen.watch(context);
 
-    final input = ClipRect(
+    final keyboardHeight = baseManager.keyboardHeight.watch(context),
+        keyboardVisible = baseManager.keyboardVisible.watch(context);
+
+    final double height = PlatformHelper.isDesktop ? 66 : 88;
+
+    final double maxHeight =
+        MediaQuery.of(context).size.height *
+        (PlatformHelper.isDesktop ? 0.25 : 0.5);
+
+    final platform = baseManager.platform.watch(context);
+
+    final isWindows = computed(() => platform == PlatformType.windows);
+
+    final input = Container(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        8,
+        8,
+        MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Row(
+        spacing: 8,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Flexible(
+            child: TextFormField(
+              focusNode: controller.focusNode,
+              decoration: InputDecoration(hint: Text("请输入")),
+              controller: widget.textController,
+              onChanged: widget.onContentChange,
+              onEditingComplete: widget.onSend,
+            ),
+          ),
+          Row(
+            children: [
+              IconButton(onPressed: () {}, icon: Icon(Icons.emoji_emotions)),
+              IconButton(
+                onPressed: controller.handleTogglePanel,
+                icon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Icon(
+                    key: ValueKey(panelOpen),
+                    panelOpen ? Icons.close : Icons.add,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          AnimatedContainer(
+            decoration: BoxDecoration(),
+            clipBehavior: Clip.antiAlias,
+            width: (!isWindows() && widget.content.isNotEmpty) ? null : 0,
+            duration: const Duration(milliseconds: 600),
+            child: IconButton(
+              onPressed:
+                  widget.content.isNotEmpty &&
+                      widget.currentServiceID.isNotEmpty
+                  ? widget.onSend
+                  : null,
+              icon: Icon(
+                Icons.send,
+                color:
+                    widget.content.isNotEmpty &&
+                        widget.currentServiceID.isNotEmpty
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withAlpha(100),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return ClipRect(
+      clipBehavior: Clip.antiAlias,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-        child: Container(
-          height: 88,
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          color: theme.appBarTheme.backgroundColor!.withAlpha(100),
-          child: Row(
-            spacing: 16,
-            children: [
-              Row(
+        child: SlidingUpPanel(
+          onPanelOpened: controller.handlePanelOpened,
+          onPanelClosed: controller.handlePanelClosed,
+          controller: controller.panelController,
+          minHeight: keyboardVisible ? keyboardHeight + height : height,
+          boxShadow: const [],
+          maxHeight: maxHeight,
+          color: theme.appBarTheme.backgroundColor!.withAlpha(200),
+          body: widget.body,
+          panel: ClipRect(
+            clipBehavior: Clip.antiAlias,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(Icons.emoji_emotions),
-                  ),
-                  IconButton(
-                    onPressed: handleTogglePanel,
-                    icon: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: Icon(
-                        key: ValueKey(_panelOpen),
-                        _panelOpen ? Icons.close : Icons.add,
+                  input,
+                  Flexible(
+                    child: Container(
+                      height: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        spacing: 16,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          PanelItem(
+                            icon: Icons.photo,
+                            label: "图片",
+                            onTap: widget.onSelectImage,
+                          ),
+                          PanelItem(
+                            icon: Icons.folder,
+                            label: "文件",
+                            onTap: widget.onSelectImage,
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ],
               ),
-              Flexible(
-                child: TextFormField(
-                  decoration: InputDecoration(hint: Text("请输入")),
-                  controller: widget.textController,
-                  onChanged: widget.onContentChange,
-                  onEditingComplete: widget.onSend,
-                ),
-              ),
-              IconButton(
-                onPressed:
-                    widget.content.isNotEmpty &&
-                        widget.currentServiceID.isNotEmpty
-                    ? widget.onSend
-                    : null,
-                icon: Icon(
-                  Icons.send,
-                  color:
-                      widget.content.isNotEmpty &&
-                          widget.currentServiceID.isNotEmpty
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withAlpha(100),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
-    );
-
-    return SlidingUpPanel(
-      controller: controller,
-      minHeight: 88,
-      maxHeight: MediaQuery.of(context).size.height * 0.3,
-      color: theme.appBarTheme.backgroundColor!.withAlpha(100),
-      panel: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          input,
-          Container(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Material(
-                  color: theme.cardTheme.color,
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                  clipBehavior: Clip.antiAlias,
-                  child: Ink(
-                    child: InkWell(
-                      onTap: widget.onSelectImage,
-                      child: Container(
-                        width: 88,
-                        height: 88,
-                        padding: EdgeInsets.all(16),
-                        child: Column(
-                          spacing: 4,
-                          children: [Icon(Icons.photo, size: 32), Text("图片")],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      body: const SizedBox(),
-      collapsed: input,
     );
   }
 }

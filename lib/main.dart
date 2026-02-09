@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:chinese_font_library/chinese_font_library.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:hive_ce/hive_ce.dart';
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
@@ -71,13 +72,21 @@ class _AppState extends State<App> with TrayListener {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      builder: FlutterSmartDialog.init(),
-      title: "在线客服聊天系统(客服侧)",
-      debugShowCheckedModeBanner: false,
-      routerConfig: router,
-      theme: AppTheme.theme(),
-      darkTheme: AppTheme.darkTheme(),
+    return AnnotatedRegion(
+      value: SystemUiOverlayStyle(
+        systemStatusBarContrastEnforced: false,
+        systemNavigationBarContrastEnforced: false,
+        systemNavigationBarDividerColor: Colors.transparent,
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+      ),
+      child: MaterialApp.router(
+        builder: FlutterSmartDialog.init(),
+        title: "在线客服聊天系统(客服侧)",
+        routerConfig: router,
+        theme: AppTheme.theme().useSystemChineseFont(Brightness.light),
+        darkTheme: AppTheme.darkTheme().useSystemChineseFont(Brightness.dark),
+      ),
     );
   }
 }

@@ -22,13 +22,9 @@ Future<void> onInit() async {
       titleBarStyle: TitleBarStyle.hidden,
     );
 
-    windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.center();
-
-      Future.delayed(const Duration(milliseconds: 500)).then((_) async {
-        await windowManager.show();
-        await windowManager.focus();
-      });
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
     });
 
     trayManager.setIcon(

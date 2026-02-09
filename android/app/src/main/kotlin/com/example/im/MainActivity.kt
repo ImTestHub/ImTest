@@ -1,4 +1,4 @@
-package com.example.im_test
+package com.example.im
 
 import io.flutter.embedding.android.FlutterActivity
 

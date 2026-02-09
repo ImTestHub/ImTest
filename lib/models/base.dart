@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:im_test/helper/platform.dart';
+import 'package:keyboard_height_plugin/keyboard_height_plugin.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -16,16 +17,28 @@ class BaseManager {
 
   final Signal<String> _env;
 
+  final Signal<double> _keyboardHeight;
+
+  final Signal<bool> _keyboardVisible;
+
   Signal<PlatformType> get platform => _platform;
 
   Signal<bool> get isMaximized => _isMaximized;
 
   Signal<String> get env => _env;
 
+  Signal<double> get keyboardHeight => _keyboardHeight;
+
+  Signal<bool> get keyboardVisible => _keyboardVisible;
+
+  final KeyboardHeightPlugin _keyboardHeightPlugin = KeyboardHeightPlugin();
+
   BaseManager()
     : _platform = signal(PlatformType.windows),
       _isMaximized = signal(false),
-      _env = signal("") {
+      _env = signal(""),
+      _keyboardHeight = signal(0.0),
+      _keyboardVisible = signal(false) {
     if (kIsWeb) {
       _platform.value = PlatformType.web;
     } else if (Platform.isWindows) {
@@ -41,6 +54,15 @@ class BaseManager {
     } else if (Platform.isMacOS) {
       _platform.value = PlatformType.macOS;
     }
+
+    _keyboardHeightPlugin.onKeyboardHeightChanged((double height) {
+      if (height != 0) {
+        _keyboardHeight.value = height;
+        _keyboardVisible.value = true;
+      } else {
+        _keyboardVisible.value = false;
+      }
+    });
 
     if (PlatformHelper.isDesktop) {
       windowManager.isMaximized().then((res) {

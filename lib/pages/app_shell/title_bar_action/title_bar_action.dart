@@ -5,18 +5,63 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:signals/signals_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
-class TitleBarAction extends StatelessWidget {
+class TitleBarAction extends StatefulWidget {
   const TitleBarAction({super.key});
+
+  @override
+  State<TitleBarAction> createState() => _TitleBarActionState();
+}
+
+class _TitleBarActionState extends State<TitleBarAction> with WindowListener {
+  @override
+  void initState() {
+    super.initState();
+    windowManager.addListener(this);
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  void onWindowMaximize() {
+    setState(() {});
+  }
+
+  @override
+  void onWindowMinimize() {
+    setState(() {});
+  }
+
+  @override
+  void onWindowUnmaximize() {
+    setState(() {});
+  }
+
+  @override
+  void onWindowRestore() {
+    setState(() {});
+  }
+
+  @override
+  void onWindowEnterFullScreen() {
+    super.onWindowEnterFullScreen();
+    setState(() {});
+  }
+
+  @override
+  void onWindowLeaveFullScreen() {
+    super.onWindowLeaveFullScreen();
+    setState(() {});
+  }
 
   void handleMinimize() {
     windowManager.minimize();
   }
 
-  void handleMaximize() {
-    final isMaximized = baseManager.isMaximized.value;
-
-    baseManager.setIsMaximized(!baseManager.isMaximized.value);
-
+  void handleMaximize(bool isMaximized) {
     if (isMaximized) {
       windowManager.unmaximize();
 
@@ -24,6 +69,8 @@ class TitleBarAction extends StatelessWidget {
     }
 
     windowManager.maximize();
+
+    baseManager.setIsMaximized(!baseManager.isMaximized.value);
   }
 
   void handleClose() async {
@@ -32,8 +79,6 @@ class TitleBarAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMaximized = baseManager.isMaximized.watch(context);
-
     return Positioned(
       right: 16,
       top: 8,
@@ -45,14 +90,20 @@ class TitleBarAction extends StatelessWidget {
               onPressed: handleMinimize,
               icon: const Icon(Symbols.remove),
             ),
-            IconButton(
-              tooltip: isMaximized ? "还原" : "最大化",
-              onPressed: () => handleMaximize(),
-              icon: Icon(
-                isMaximized
-                    ? FluentIcons.window_multiple_16_filled
-                    : FluentIcons.maximize_16_filled,
-              ),
+            FutureBuilder(
+              future: windowManager.isMaximized(),
+              builder: (context, snapshot) {
+                final isMaximized = snapshot.data ?? true;
+                return IconButton(
+                  tooltip: isMaximized ? "还原" : "最大化",
+                  onPressed: () => handleMaximize(isMaximized),
+                  icon: Icon(
+                    isMaximized
+                        ? FluentIcons.window_multiple_16_filled
+                        : FluentIcons.maximize_16_filled,
+                  ),
+                );
+              },
             ),
             IconButton(
               tooltip: "退出",

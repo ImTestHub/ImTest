@@ -21,6 +21,13 @@ class SourceImage extends StatefulWidget {
 }
 
 class _SourceImageState extends State<SourceImage> {
+  bool isValidUrl(String url) {
+    final uri = Uri.tryParse(url);
+    return uri != null &&
+        uri.hasScheme &&
+        (uri.hasAuthority || uri.path.isNotEmpty);
+  }
+
   final test = signal(Uint8List(0));
 
   Future<void> onInit() async {
